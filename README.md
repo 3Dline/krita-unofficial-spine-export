@@ -14,6 +14,8 @@ This plugin is inspired by the official [Photoshop plugin](https://github.com/Es
 
 It works nearly the same but not all the features are implemented. You can find the script under ``Tools > Scripts > Export to Spine``. Select a folder and all your images will be exported into it as well as ``spine.json``
 
+by defining the [origin] name tag to your krita paint layer with a small dot on it, it would be origin of your skeleton that appear in spine.
+
 Supported in Group Layers:
 * (Bone)
 * (Slot)
