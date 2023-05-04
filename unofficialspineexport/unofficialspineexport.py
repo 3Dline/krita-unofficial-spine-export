@@ -68,6 +68,8 @@ class UnofficialSpineExport(Extension):
         self.msgBox.exec_()
 
     def _origin(self):
+        self.xroot = 0
+        self.yroot = 0
         document = Krita.instance().activeDocument()
         node = document.rootNode()
         for child in node.childNodes():
@@ -87,7 +89,7 @@ class UnofficialSpineExport(Extension):
             if '(ignore)' in child.name():
                 continue
 
-            if '(origin)' in child.name():
+            if self.originPattern.search(child.name()):
                 continue
 
             if child.childNodes():
