@@ -17,6 +17,9 @@ class UnofficialSpineExport(Extension):
         self.bonePattern = re.compile("\(bone\)|\[bone\]", re.IGNORECASE)
         self.mergePattern = re.compile("\(merge\)|\[merge\]", re.IGNORECASE)
         self.slotPattern = re.compile("\(slot\)|\[slot\]", re.IGNORECASE)
+        self.originPattern = re.compile("\(origin\)|\[origin\]", re.IGNORECASE)
+        self.xroot = 0
+        self.yroot = 0
 
     def setup(self):
         pass
@@ -48,6 +51,7 @@ class UnofficialSpineExport(Extension):
             self.spineSlots = self.json['slots']
             self.spineDefaultSkin = self.json['skins']['default']
 
+            self._origin()
             Krita.instance().setBatchmode(True)
             self.document = document
             self._export(document.rootNode(), self.directory)
@@ -63,6 +67,15 @@ class UnofficialSpineExport(Extension):
         self.msgBox.setText(message)
         self.msgBox.exec_()
 
+    def _origin(self):
+        document = Krita.instance().activeDocument()
+        node = document.rootNode()
+        for child in node.childNodes():
+            if self.originPattern.search(child.name()):
+                rect = child.bounds()
+                self.xroot = rect.left() + rect.width() / 2
+                self.yroot = (- rect.bottom() + rect.height() / 2)
+
     def _export(self, node, directory, bone="root", xOffset=0, yOffset=0, slot=None):
         for child in node.childNodes():
             if "selectionmask" in child.type():
@@ -74,6 +87,9 @@ class UnofficialSpineExport(Extension):
             if '(ignore)' in child.name():
                 continue
 
+            if '(origin)' in child.name():
+                continue
+
             if child.childNodes():
                 if not self.mergePattern.search(child.name()):
                     newBone = bone
@@ -83,8 +99,8 @@ class UnofficialSpineExport(Extension):
                     if self.bonePattern.search(child.name()):
                         newBone = self.bonePattern.sub('', child.name()).strip()
                         rect = child.bounds()
-                        newX = rect.left() + rect.width() / 2 - xOffset
-                        newY = (- rect.bottom() + rect.height() / 2) - yOffset
+                        newX = (rect.left() + rect.width() / 2 - xOffset) - self.xroot
+                        newY = ((- rect.bottom() + rect.height() / 2) - yOffset) - self.yroot
                         self.spineBones.append({
                             'name': newBone,
                             'parent': bone,
@@ -126,8 +142,8 @@ class UnofficialSpineExport(Extension):
             if slotName not in self.spineDefaultSkin:
                 self.spineDefaultSkin[slotName] = {}
             self.spineDefaultSkin[slotName][name] = {
-                'x': rect.left() + rect.width() / 2 - xOffset,
-                'y': (- rect.bottom() + rect.height() / 2) - yOffset,
+                'x': (rect.left() + rect.width() / 2 - xOffset) - self.xroot,
+                'y': ((- rect.bottom() + rect.height() / 2) - yOffset) - self.yroot,
                 'rotation': 0,
                 'width': rect.width(),
                 'height': rect.height(),
@@ -136,4 +152,3 @@ class UnofficialSpineExport(Extension):
 
 # And add the extension to Krita's list of extensions:
 Krita.instance().addExtension(UnofficialSpineExport(Krita.instance()))
-
